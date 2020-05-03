@@ -1,37 +1,40 @@
 [inputs]
-mouse = '/dev/input/by-id/usb-SteelSeries_SteelSeries_Rival_310_eSports_Mouse_000000000000-if01-event-mouse'
-keyboard = '/dev/input/by-id/usb-DATACOMP_SteelS쀁̄Љ̒DATA-event-kbd'
+mouse = '/dev/input/by-id/usb-Logitech_USB_Receiver-if02-event-mouse'
+keyboard = '/dev/input/by-id/usb-SONiX_USB_DEVICE-event-kbd'
+
+# Define specific DDC commands for host and guest
+# Required for monitors that only respond to DDC on the active input
+# host_screen_cmd - DDC command on the host.
+# guest_screen_cmd - DDC command on the guest
+# parameters (eg. <address>) will be replaced with their definitions below at runtime.
+[commands]
+host_screen_cmd = '/usr/bin/ddccontrol -r <address> -w <id> <host_dev>'
+guest_screen_cmd = 'ssh user@host "/usr/local/bin/ddcctl -d <guest_dev> -i <id>"'
 
 [[screens]]
-name = 'Dell'
-dev = 'dev:/dev/i2c-1'
+name = 'Dell-1'
+host_dev = 'dev:/dev/i2c-0'
+guest_dev = '1'
 address = '0x60'
   [[screens.sources]]
-  id = '16'
-  owner = 'external'
-  name = 'mDP'
-  [[screens.sources]]
-  id = '17'
+  id = '15'
   owner = 'guest'
-  name = 'HDMI1'
-  [[screens.sources]]
-  id = '18'
-  owner = 'host'
-  name = 'HDMI2'
-
-[[screens]]
-name = 'Philips'
-dev = 'dev:/dev/i2c-3'
-address = '0x60'
-  [[screens.sources]]
-  id = '1'
-  owner = 'external'
-  name = 'DSUB'
+  name = 'DP'
   [[screens.sources]]
   id = '3'
   owner = 'host'
   name = 'DVI'
 
-[usb_switch]
-property_value = '1a40/101/111'
-property_name = 'PRODUCT'
+[[screens]]
+name = 'Dell-2'
+host_dev = 'dev:/dev/i2c-1'
+guest_dev = '2'
+address = '0x60'
+  [[screens.sources]]
+  id = '15'
+  owner = 'guest'
+  name = 'DP'
+  [[screens.sources]]
+  id = '3'
+  owner = 'host'
+  name = 'DVI'

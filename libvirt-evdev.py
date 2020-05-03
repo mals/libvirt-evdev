@@ -12,12 +12,24 @@ import pyudev
 import toml
 import pickle
 
-def screen_input_switch(owner):
+def screen_input_switch(owner, old_mode):
+
     for screen in config['screens']:
         for source in screen['sources']:
             if source['owner'] == owner:
+                #Some monitors only accept DDC commands on the active input.
+                #So if the active display is the guest, the DDC command from the host
+                #will not work.
+                #A solution to this is to run a command on the guest via ssh with
+                #public key auth to issue the necessary DDC command.
+                if (old_mode == "guest"):
+                    screen_input_cmd = config['commands']['guest_screen_cmd'].replace('<address>', screen['address']).replace('<id>', source['id']).replace('<guest_dev>', screen['guest_dev'])
+                else:
+                    screen_input_cmd = config['commands']['host_screen_cmd'].replace('<address>', screen['address']).replace('<id>', source['id']).replace('<host_dev>', screen['host_dev'])
+
                 print("Screen input switch: {0} {1}".format(screen['name'], source['name']))
-                subprocess.run(["/usr/bin/ddccontrol", "-r", screen['address'], "-w", source['id'], screen['dev']], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(screen_input_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
 
 async def replicate(source_device):
     global current_mode
@@ -27,14 +39,14 @@ async def replicate(source_device):
             if event.type == e.EV_SYN:
                 continue
 
-            if event.type == e.EV_KEY and event.code == e.KEY_SCROLLLOCK:
+            if event.type == e.EV_KEY and event.code == e.KEY_PAUSE:
                 if event.value == 0:
                     current_mode = {
                         "host": "guest",
                         "guest": "host",
                     }[mode]
 
-                    screen_input_switch(current_mode)
+                    screen_input_switch(current_mode, mode)
 
                 mode = "host"
             else:
